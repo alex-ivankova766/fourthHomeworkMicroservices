@@ -1,0 +1,2 @@
+/docker-entrypoint-initdb.d
+/node_modules
