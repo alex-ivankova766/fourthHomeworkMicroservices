@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Role, RoleCreationAttrs } from './roles.model';
 
@@ -9,6 +9,10 @@ export class RolesService {
     ) {}
 
     async createRole(attrs: RoleCreationAttrs) {
+        const isRoleExists = await this.roleRepository.findOne({where: {roleName: attrs.roleName}});
+        if (isRoleExists) {
+            throw new BadRequestException('Роль уже существует')
+        }
         const role = await this.roleRepository.create(attrs);
         return role;
     } 
@@ -19,7 +23,7 @@ export class RolesService {
     }
 
     async getAllRoles() {
-        const roles = await this.roleRepository.findAll();
+        const roles = await this.roleRepository.findAll({include: {all: true}});
         return roles;
     }
 }

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Inject, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Inject, Param, Post, UseGuards } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { firstValueFrom } from "rxjs";
@@ -35,7 +35,6 @@ export class TextblocksController {
   ) {
       const textblock = await firstValueFrom(this.dataService.send({cmd: 'create-textblock'}, textblockData));
       return textblock;
-
   }
 
   @UseGuards(RolesGuard)
@@ -48,14 +47,13 @@ export class TextblocksController {
   ) {
       const textblock = await firstValueFrom(this.dataService.send({cmd: 'update-textblock'}, newTextblockData));
       return textblock;
-
   }
 
   @UseGuards(RolesGuard)
   @Roles('admin')
   @ApiOperation({ summary: 'Удалить текстовый блок' })
   @ApiResponse({ status: 201, type: Boolean })
-  @Post('delete/:id')
+  @Delete('delete/:id')
   async deleteTextblock(
     @Param('id') id: number,
   ) {

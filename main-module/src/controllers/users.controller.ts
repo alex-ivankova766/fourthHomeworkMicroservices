@@ -18,7 +18,7 @@ export class UsersController {
   ) {}
 
   @ApiOperation({ summary: 'Активировать аккаунт' })
-  @ApiResponse({ status: 201, type: Token, description: 'В токене и в юзере обновляет информацию isActivated: true' })
+  @ApiResponse({ status: 201, type: Token, description: 'Ссылка приходит на почту при регистрации. В токене и в юзере обновляется информация isActivated: true' })
   @Get('activate/:link')
   async activate(
       @Param('link') activationLink: ActivationLink,

@@ -1,16 +1,12 @@
-import { Body, Controller, Get, Inject, Param, Post, Req, Res, UseFilters, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Inject, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Response, Request } from "express";
 import { firstValueFrom } from "rxjs";
-import { AdminSelfGuard } from 'src/guards/adminSelfEmail.guard';
 import { Roles } from 'src/guards/roles.decorator';
 import { RolesGuard } from 'src/guards/roles.guard';
-import { SelfGuard } from 'src/guards/selfId.guard';
 import { ProfileUpdatingAttrs } from 'types/change-profile';
 import { Profile } from 'types/profile';
-
-
 
 @ApiTags('Личные данные')
 @Controller('profiles')
@@ -47,7 +43,7 @@ export class ProfilesController {
 
   @ApiOperation({ summary: 'Удалить профиль' })
   @ApiResponse({ status: 201, type: Boolean })
-  @Post('delete')
+  @Delete('delete')
   async deleteProfile(
       @Res({ passthrough: true }) response: Response,
       @Req() request: Request

@@ -5,7 +5,6 @@ class MailService {
     private transporter: nodemailer.Transporter;
 
     constructor() {}
-    //INSTANCE CREATE FOR MAIL
     static getInstance() {
         if (!MailService.instance) {
             MailService.instance = new MailService();

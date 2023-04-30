@@ -1,4 +1,4 @@
-import { Body, Controller, Inject, Post, Req, Res } from '@nestjs/common';
+import { Body, Controller, Get, Inject, Post, Req, Res } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Response, Request } from "express";
@@ -45,7 +45,7 @@ export class AuthController {
 
   @ApiOperation({ summary: 'Выход' })
   @ApiResponse({ status: 201, type: Boolean, description: 'Удалит refresh token из куков и из БД' })
-  @Post('logout')
+  @Get('logout')
   async logout(
       @Res({ passthrough: true }) response: Response,
       @Req() request: Request
