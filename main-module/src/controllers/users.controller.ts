@@ -4,6 +4,7 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Response, Request } from "express";
 import { firstValueFrom } from "rxjs";
 import { AdminSelfGuard } from 'src/guards/adminSelfEmail.guard';
+import { ActivationLink } from 'types/activation-link';
 import { Token } from 'types/token';
 import { ChangeEmailCouple, ChangePassCouple } from 'types/users-change';
 
@@ -15,6 +16,20 @@ export class UsersController {
   constructor(
       @Inject('ACCESS_SERVICE') private accessService: ClientProxy,
   ) {}
+
+  @ApiOperation({ summary: 'Активировать аккаунт' })
+  @ApiResponse({ status: 201, type: Token, description: 'В токене и в юзере обновляет информацию isActivated: true' })
+  @Get('activate/:link')
+  async activate(
+      @Param('link') activationLink: ActivationLink,
+      @Res({ passthrough: true }) response: Response
+  ) {
+      const user = await firstValueFrom(this.accessService.send({ cmd: 'activate' }, activationLink));
+      const tokens = await firstValueFrom(this.accessService.send({ cmd: 'update-refresh-token' }, {newData: { isActivated: true }, id: user.id}));
+      response.cookie('refreshToken', tokens.refreshToken, { maxAge: 30 * 24 * 60 * 60 * 1000, httpOnly: true });
+      return {token: tokens.accessToken};
+  }
+
   @UseGuards(AdminSelfGuard)
   @ApiOperation({ summary: 'Изменить почту' })
   @ApiResponse({ status: 201, type: Token })
