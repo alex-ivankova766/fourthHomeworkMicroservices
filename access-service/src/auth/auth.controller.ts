@@ -10,8 +10,7 @@ export class AuthController {
     constructor(
         private initialService: InitialService,
         private tokenService: TokensService,
-        private authService: AuthService,
-        // private vkService: VkoauthService
+        private authService: AuthService
     ) {}
     
     @MessagePattern({ cmd: 'verify-refresh-token' })
@@ -23,9 +22,9 @@ export class AuthController {
 
     @MessagePattern({ cmd: 'update-refresh-token' })
     async updateToken(
-        @Payload() {newData, refreshToken}
+        @Payload() {newData, id}
     ) {
-        return await this.tokenService.updateRefreshToken(newData, refreshToken); 
+        return await this.tokenService.updateRefreshToken(newData, id); 
     }
 
     @MessagePattern({ cmd: 'refresh' })

@@ -16,6 +16,13 @@ export class UsersController {
         return await this.userService.updateUserEmail(email, newEmail); 
     }
 
+    @MessagePattern({ cmd: 'activate'})
+    async activate( 
+        @Payload() activationLink: string
+    ) {
+        return await this.userService.activate(activationLink);
+    }
+
     @MessagePattern({ cmd: 'change-password' })
     async changePassword(
         @Payload() {email, newPassword, oldPassword}

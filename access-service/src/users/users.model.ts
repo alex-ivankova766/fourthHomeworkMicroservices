@@ -6,6 +6,8 @@ import { UserRoles } from 'src/roles/linkingTables/user-roles.model';
 interface UserCreationAttrs { 
     email: string;
     password: string;
+    activationLink: string;
+    isActivated: boolean;
 }
 
 @Table( {tableName: 'users'})
@@ -28,13 +30,13 @@ export class User extends Model<User, UserCreationAttrs> {
   @Column({ type: DataType.STRING, allowNull: false })
   password: string;
 
-  // @ApiProperty({example: 'false', description: 'Is account activated?'}) 
-  // @Column({ type: DataType.BOOLEAN, defaultValue: false })
-  // isActivated: boolean;
+  @ApiProperty({example: 'false', description: 'Is account activated?'}) 
+  @Column({ type: DataType.BOOLEAN, defaultValue: false })
+  isActivated: boolean;
 
-  // @ApiProperty({example: '', description: 'Activation link'}) 
-  // @Column({ type: DataType.STRING, allowNull: false })
-  // activationLink: string;
+  @ApiProperty({example: '', description: 'Activation link'}) 
+  @Column({ type: DataType.STRING, allowNull: false })
+  activationLink: string;
 
   @BelongsToMany(() => Role, () => UserRoles)
   roles: Role[];

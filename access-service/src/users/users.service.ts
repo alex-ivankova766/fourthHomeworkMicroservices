@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { User } from './users.model';
 import { RolesService } from 'src/roles/roles.service';
@@ -8,6 +8,8 @@ import { UnInitialized } from 'src/exceptions/notInitialized';
 import { UserNotExists } from 'src/exceptions/userNotExists';
 import { UserOrRoleNotFound } from 'src/exceptions/userRoleNotFound';
 import { LoginCouple } from 'src/classes/login-couple';
+import * as uuid from 'uuid';
+import { mailService } from './mail-service/mail.service';
 
 @Injectable()
 export class UsersService {
@@ -30,12 +32,24 @@ export class UsersService {
             throw new UserExists(email);
         }
 
-        const hashPassword = await bcrypt.hash(password, +process.env.SALT)
+        const hashPassword = await bcrypt.hash(password, +process.env.SALT);
+        const activationLink = uuid.v4();
 
-        let user = await this.userRepository.create( {email: email, password: hashPassword} );
+        let user = await this.userRepository.create( { email: email, password: hashPassword, activationLink: activationLink } );
         await user.$set('roles', [baseRole]);
+
+        await mailService.sendActivationMail(email, `${process.env.API_URL}/api/users/activate/${activationLink}`);
         return user.id;
     }
+
+    async activate(activationLink: string) {
+        let user = await this.userRepository.findOne({where: {activationLink: activationLink}});
+        if (!user) {
+          throw new BadRequestException("Activation link is incorrect")
+        }
+        await user.update({isActivated: true});
+        return user;
+      }
 
     private async validateUser(couple: LoginCouple) {
         const user = await this.getUserByEmail(couple.email);
