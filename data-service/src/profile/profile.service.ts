@@ -14,7 +14,7 @@ export class ProfileService {
     private fileService: DatabaseFilesService,
   ) {}
 
-  async createProfile(createData): Promise<Profile> {
+  async createProfile(createData: ProfileCreatingAttrs): Promise<Profile> {
     try {
       const profile = await this.profileRepository.create(createData);
       if (createData.avatarId) {

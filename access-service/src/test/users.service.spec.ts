@@ -124,7 +124,7 @@ describe('UsersService', () => {
   describe('Delete User by email', () => {
     it('Метод существует', async () => {
       const usersService = await getUsersService();
-      expect(usersService).toHaveProperty('deleteUserByEmail');
+      expect(usersService).toHaveProperty('deleteUserById');
     });
 
     it('Успешно удаляет', async () => {
@@ -133,7 +133,7 @@ describe('UsersService', () => {
 
       const usersService = await getUsersService(undefined, user13);
 
-      expect(await usersService.deleteUserByEmail('a')).toBe(true);
+      expect(await usersService.deleteUserById(1)).toBe(true);
       expect(user13.findOne).toHaveBeenCalled();
       expect(u13Model.destroy).toHaveBeenCalled();
     });
@@ -143,7 +143,7 @@ describe('UsersService', () => {
 
       const usersService = await getUsersService(undefined, userNull);
 
-      expect(usersService.deleteUserByEmail('a@mail.ru')).rejects.toThrow(
+      expect(usersService.deleteUserById(1)).rejects.toThrow(
         new HttpException('Пользователь не существует', HttpStatus.NOT_FOUND),
       );
 
