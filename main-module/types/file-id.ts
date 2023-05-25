@@ -1,6 +1,5 @@
-import { ApiProperty } from "@nestjs/swagger";
+import { ApiProperty } from '@nestjs/swagger';
 export class FileId {
-
-    @ApiProperty({example: '1', description: 'Id файла из БД'})
-    id: number;
+  @ApiProperty({ example: '1', description: 'Id файла из БД' })
+  id: number;
 }

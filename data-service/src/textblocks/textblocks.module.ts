@@ -8,7 +8,6 @@ import { DatabaseFilesModule } from 'src/databaseFiles/files.module';
 @Module({
   providers: [TextblocksService],
   controllers: [TextblocksController],
-  imports:[SequelizeModule.forFeature([TextBlock]),
-DatabaseFilesModule]
+  imports: [SequelizeModule.forFeature([TextBlock]), DatabaseFilesModule],
 })
 export class TextblocksModule {}

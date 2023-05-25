@@ -1,28 +1,32 @@
-import { Controller, Inject, Post, Req, Res } from '@nestjs/common';
-import { ClientProxy } from '@nestjs/microservices';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { Response, Request } from "express";
-import { firstValueFrom } from "rxjs";
-import { Token } from 'types/token';
+import { Controller, Post, Req, Res } from '@nestjs/common';
+// eslint-disable-next-line prettier/prettier
+import { ApiOperation, ApiResponse, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
+import { Response, Request } from 'express';
+import { Token } from '../../types/token';
+import { RabbitMQClient } from '../rabbitmq.client';
 
 @ApiTags('Работа с токенами')
 @Controller('tokens')
 export class TokensController {
-
-  constructor(
-      @Inject('ACCESS_SERVICE') private accessService: ClientProxy,
-  ) {}
+  constructor(private rabbitMQClient: RabbitMQClient) {}
 
   @ApiOperation({ summary: 'Обновление токенов' })
+  // eslint-disable-next-line prettier/prettier
   @ApiResponse({ status: 201, type: Token, description: 'Refresh token запишет в httpOnly куки' })
+  @ApiUnauthorizedResponse({ status: 401, description: 'Ошибка авторизации' })
   @Post('refresh')
   async refresh(
-      @Res({ passthrough: true }) response: Response,
-      @Req() request: Request
+    @Res({ passthrough: true }) response: Response,
+    @Req() request: Request,
   ) {
-      const { refreshToken } = request.cookies;
-      const {accessToken, newRefreshToken} = await firstValueFrom(this.accessService.send({cmd: 'refresh'}, refreshToken));
-      response.cookie('refreshToken', newRefreshToken, {maxAge: 30 * 24 * 60 * 60 * 1000, httpOnly: true});
-      return {token: accessToken};
+    const { refreshToken } = request.cookies;
+    const { accessToken, newRefreshToken } = await this.rabbitMQClient.refresh(
+      refreshToken,
+    );
+    response.cookie('refreshToken', newRefreshToken, {
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+      httpOnly: true,
+    });
+    return { token: accessToken };
   }
 }

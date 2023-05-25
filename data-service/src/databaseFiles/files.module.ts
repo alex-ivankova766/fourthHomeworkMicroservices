@@ -1,14 +1,14 @@
 import { Module } from '@nestjs/common';
 import { SequelizeModule } from '@nestjs/sequelize';
 import { DbFilesController } from './files.controller';
-import {DatabaseFile} from './files.model';
-import {DatabaseFilesService} from './files.service';
-import { UploadFolderService } from './upload-folder-service/upload-folder.service';
+import { DatabaseFilesService } from './files.service';
+import { DatabaseFile } from './files.model';
+import { HttpModule } from '@nestjs/axios';
 
 @Module({
   controllers: [DbFilesController],
-  providers: [DatabaseFilesService, UploadFolderService],
+  providers: [DatabaseFilesService],
   exports: [DatabaseFilesService],
-  imports:[SequelizeModule.forFeature([DatabaseFile])]
+  imports: [SequelizeModule.forFeature([DatabaseFile]), HttpModule],
 })
 export class DatabaseFilesModule {}

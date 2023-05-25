@@ -1,4 +1,4 @@
-export class ChangePassCouple { 
-    readonly oldPassword: string;
-    readonly newPassword: string;
+export class ChangePassCouple {
+  readonly oldPassword: string;
+  readonly newPassword: string;
 }

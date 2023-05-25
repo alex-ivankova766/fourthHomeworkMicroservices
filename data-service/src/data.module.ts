@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from "@nestjs/config";
+import { ConfigModule } from '@nestjs/config';
 import { SequelizeModule } from '@nestjs/sequelize';
 import { ProfileModule } from './profile/profile.module';
 import { TextblocksModule } from './textblocks/textblocks.module';
@@ -9,7 +9,7 @@ import { TextBlock } from './textblocks/textblocks.model';
 @Module({
   imports: [
     ConfigModule.forRoot({
-      envFilePath: `../.env`
+      envFilePath: `../.env`,
     }),
     SequelizeModule.forRoot({
       dialect: 'postgres',
@@ -23,7 +23,7 @@ import { TextBlock } from './textblocks/textblocks.model';
     }),
     ProfileModule,
     TextblocksModule,
-    ProfileModule
-]
+    ProfileModule,
+  ],
 })
 export class DataModule {}
