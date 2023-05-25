@@ -1,42 +1,45 @@
-import { Controller, Delete, Inject, Post, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
-import { ClientProxy } from '@nestjs/microservices';
+// eslint-disable-next-line prettier/prettier
+import { Body, Controller, Delete, Post, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { firstValueFrom } from "rxjs";
-import { Roles } from 'src/guards/roles.decorator';
-import { RolesGuard } from 'src/guards/roles.guard';
-import { FileId } from 'types/file-id';
-
-
+import { Roles } from '../../src/guards/roles.decorator';
+import { RolesGuard } from '../../src/guards/roles.guard';
+import { AvatarPathId, Link } from '../../types/path2file';
+import { RabbitMQClient } from '../rabbitmq.client';
 
 @ApiTags('Работа с файлами')
 @Controller('files')
 export class FilesController {
-
-  constructor(
-      @Inject('DATA_SERVICE') private dataService: ClientProxy
-  ) {}
+  constructor(private rabbitMQClient: RabbitMQClient) {}
 
   @UseGuards(RolesGuard)
   @Roles('admin')
-  @ApiOperation({ summary: 'Удалить неиспользуемые файлы' })
-  @ApiResponse({ status: 201, type: Boolean })
+  // eslint-disable-next-line prettier/prettier
+  @ApiOperation({ summary: `Удалить файлы неиспользующиеся более ${process.env.REQ_TIME} милисекунд` })
+  @ApiResponse({ status: 201, type: Boolean, description: 'Успешный запрос' })
   @Delete('clean')
-  async cleanFiles(
-  ) {
-      return await firstValueFrom(this.dataService.send({ cmd: 'clean-files' }, {}));
+  async cleanFiles() {
+    return await this.rabbitMQClient.cleanFiles();
   }
 
   @UseGuards(RolesGuard)
   @Roles('admin')
   @ApiOperation({ summary: 'Загрузить файл' })
-  @ApiResponse({ status: 201, type: FileId })
+  // eslint-disable-next-line prettier/prettier
+  @ApiResponse({ status: 201, type: AvatarPathId, description: 'Успешный запрос' })
   @UseInterceptors(FileInterceptor('file'))
   @Post('upload')
-  async uploadFile(
-    @UploadedFile() file
-  ) {
-      const fileId = await firstValueFrom(this.dataService.send({cmd: 'upload-file'}, file));
-      return {id: fileId};
+  async uploadFile(@UploadedFile() file) {
+    return await this.rabbitMQClient.uploadFile(file);
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles('admin')
+  @ApiOperation({ summary: 'Загрузить аватар по ссылке' })
+  // eslint-disable-next-line prettier/prettier
+  @ApiResponse({ status: 201, type: AvatarPathId, description: 'Успешный запрос' })
+  @Post('upload_avatar_by_link')
+  async uploadAvatarByLink(@Body() link: Link): Promise<AvatarPathId> {
+    return await this.rabbitMQClient.uploadAvatarByLink(link);
   }
 }

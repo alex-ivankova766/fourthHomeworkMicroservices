@@ -1,8 +1,8 @@
 FROM node
 
-WORKDIR /usr/src/app
+WORKDIR /access-service
 
-COPY package*.json .
+COPY /access-service/package*.json .
 
 RUN npm install
 

@@ -1,52 +1,70 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { RolesService } from 'src/roles/roles.service';
-import { UsersService } from 'src/users/users.service';
-import { TokensService } from 'src/auth/tokens/tokens.service';
-import { UserDto } from 'src/dtos/user.dto';
+import { RolesService } from '../../roles/roles.service';
+import { UsersService } from '../../users/users.service';
+import { TokensService } from '../tokens/tokens.service';
+import { UserDto } from '../../dtos/user.dto';
+import { InitCouple } from '../../classes/init.couple';
 
 @Injectable()
-export class InitialService {    
-    constructor(
+export class InitialService {
+  constructor(
     private roleService: RolesService,
     private userService: UsersService,
-    private tokenService: TokensService
-    ) {}
+    private tokenService: TokensService,
+  ) {}
 
-    async createRoot(email: string, password: string, rootRole: string) {
+  async createAdmin(initCouple: InitCouple) {
+    const admin = await this.userService.createUser(initCouple, 'admin');
 
-        const rootId = await this.userService.createUser(email, password);
+    const tokenPayload = new UserDto(admin);
+    const rootTokens = await this.tokenService.generateAndSaveToken(
+      tokenPayload,
+    );
+    return rootTokens;
+  }
+  async initial(initCouple: InitCouple) {
+    const baseRole = await this.roleService.getRoleByName('user');
 
-        const root = await this.userService.getUserById(rootId);
-        const role = await this.roleService.getRoleByName(rootRole);
-        await root.$add('roles', [role]);
-        root.roles = [role];    
-
-        const rootDto = new UserDto(root);
-        const rootTokens = await this.tokenService.generateAndSaveToken(rootDto);
-        return rootTokens;
+    if (baseRole) {
+      throw new HttpException(
+        `Инициализация уже выполнена`,
+        HttpStatus.FORBIDDEN,
+      );
     }
-    async initial(email: string, password: string) {
-        const baseRole = await this.roleService.getRoleByName('user');
+    if (
+      process.env.ROOT_MAIL === undefined ||
+      process.env.ROOT_PASSWORD === undefined
+    ) {
+      throw new HttpException(
+        'Ошибка инициализации, не заданы mail & password в .env',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+    await this.roleService.createRole({
+      roleName: 'root',
+      description: 'Владелец ресурса',
+    });
+    await this.roleService.createRole({
+      roleName: 'admin',
+      description: 'Администратор',
+    });
+    await this.roleService.createRole({
+      roleName: 'user',
+      description: 'Пользователь ресурса',
+    });
 
-        if (baseRole) {
-            throw new HttpException(`Service already initialized`, HttpStatus.BAD_REQUEST);
-        }
-        await this.roleService.createRole({roleName: "owner", description: "Superuser"});
-        await this.roleService.createRole({roleName: "admin", description: "Admin"});
-        await this.roleService.createRole({roleName: "user", description: "Standart role"});
+    await this.userService.createUser(
+      {
+        email: process.env.ROOT_MAIL,
+        password: process.env.ROOT_PASSWORD,
+      },
+      'root',
+    );
+    const adminTokens = await this.createAdmin(initCouple);
 
-        const adminCandidate = await this.userService.getUserByEmail(email);
-        let adminTokens;
-        
-        if (adminCandidate) {
-            const userData = new UserDto(adminCandidate)
-            adminTokens = await this.tokenService.generateAndSaveToken( userData )
-            
-            return {accessToken: adminTokens.accessToken, refreshToken: adminTokens.refreshToken};
-        }
-
-        await this.createRoot(process.env.OWNER_MAIL, process.env.OWNER_PASSWORD, "owner");
-        adminTokens = await this.createRoot(email, password, "admin");
-
-        return {accessToken: adminTokens.accessToken, refreshToken: adminTokens.refreshToken};
-}}
+    return {
+      accessToken: adminTokens.accessToken,
+      refreshToken: adminTokens.refreshToken,
+    };
+  }
+}

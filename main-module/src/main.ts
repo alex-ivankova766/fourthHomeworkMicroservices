@@ -4,10 +4,10 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ApiModule } from './api.module';
 
 async function runServer() {
-  const PORT = process.env.PORT || 3000;
+  // const PORT = process.env.PORT || 3000;
   const app = await NestFactory.create(ApiModule);
   app.setGlobalPrefix('api');
-  app.use(cookieParser())
+  app.use(cookieParser());
 
   const config = new DocumentBuilder()
     .setTitle('Microservices by Alex Ivankova')
@@ -17,6 +17,8 @@ async function runServer() {
 
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('/api/docs', app, document);
-  await app.listen(process.env.INSIDE_PORT, () => console.log(`Server started on PORT ${process.env.OUTSIDE_PORT}...`))
+  await app.listen(process.env.INSIDE_PORT, () =>
+    console.log(`Server started on PORT ${process.env.OUTSIDE_PORT}...`),
+  );
 }
 runServer();

@@ -1,8 +1,8 @@
 FROM node
 
-WORKDIR /usr/src/app
+WORKDIR /data-service
 
-COPY package*.json .
+COPY /data-service/package*.json .
 
 RUN npm install
 

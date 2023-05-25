@@ -1,52 +1,99 @@
-import { BadRequestException, HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
-import { ClientProxy, RpcException } from '@nestjs/microservices';
-import * as bcrypt from 'bcryptjs'
-import {catchError, firstValueFrom, lastValueFrom, switchMap, of, throwError} from 'rxjs';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import * as bcrypt from 'bcryptjs';
 import { TokensService } from './tokens/tokens.service';
-import { UsersService } from 'src/users/users.service';
-import { UserDto } from 'src/dtos/user.dto';
+import { UsersService } from '../users/users.service';
+import { UserDto } from '../dtos/user.dto';
+import { LoginUserDto } from '../classes/login-user';
 
 @Injectable()
 export class AuthService {
   constructor(
-  private userService: UsersService,
-  private tokenService: TokensService) {}
+    private userService: UsersService,
+    private tokenService: TokensService,
+  ) {}
 
-  async login(email: string, password: string, skipPasswordCheck: boolean = false) {
+  async login(
+    loginCouple: Partial<LoginUserDto>,
+    skipPasswordCheck = false,
+    id: number = null,
+  ) {
+    this.checkLoginData(loginCouple, skipPasswordCheck);
+    const user = id
+      ? await this.userService.getUserById(id)
+      : await this.userService.getUserByEmail(loginCouple.email);
 
-    const user = await this.defineUserExists(email);
-    const userPassword = user?.password;
-    const isRightPassword = await bcrypt.compare(password, userPassword);
+    if (!user) {
+      throw new HttpException(
+        `Пользователя с email ${loginCouple.email} не существует`,
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    const userPassword = user.password;
+    let isRightPassword;
+    if (userPassword) {
+      isRightPassword = await bcrypt.compare(
+        loginCouple.password,
+        userPassword,
+      );
+    }
 
     if (!isRightPassword && !skipPasswordCheck) {
-      throw new BadRequestException("Invalid credentials");
+      throw new HttpException('Неверный пароль', HttpStatus.UNAUTHORIZED);
     }
-    const userData = new UserDto(user);
-    const tokens = await this.tokenService.generateAndSaveToken(userData);
-    return tokens;
+    const tokenData = new UserDto(user);
+    const tokens = await this.tokenService.generateAndSaveToken(tokenData);
+
+    return {
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+    };
   }
 
-  async defineUserExists(email: string) : Promise<any> {
-
-    const user = await this.userService.getUserByEmail(email)
+  async defineUserExists(email: string): Promise<any> {
+    const user = await this.userService.getUserByEmail(email);
     return user;
   }
 
-  async registration(email: string, password: string) {
-    if (await this.defineUserExists(email)) {
-      throw new HttpException(`Пользователь с таким e-mail уже существует`, HttpStatus.NOT_FOUND);
+  async registration(
+    createUserCouple: LoginUserDto,
+    skipPasswordCheck = false,
+  ) {
+    if (await this.defineUserExists(createUserCouple.email)) {
+      throw new HttpException(
+        `Пользователь с таким e-mail уже существует`,
+        HttpStatus.NOT_FOUND,
+      );
     }
+    this.checkLoginData(createUserCouple, skipPasswordCheck);
 
-    const id = await this.userService.createUser(email, password)
-    const user = await this.userService.getUserById(id)
-    const userData = new UserDto(user)
+    const user = await this.userService.createUser(createUserCouple);
 
-    const tokens = await this.tokenService.generateAndSaveToken({...userData})
+    const tokens = await this.login(
+      createUserCouple,
+      skipPasswordCheck,
+      user.id,
+    );
 
-    return {refreshToken: tokens.refreshToken, accessToken: tokens.accessToken, id}
+    return {
+      refreshToken: tokens.refreshToken,
+      accessToken: tokens.accessToken,
+    };
   }
 
   async logout(refreshToken) {
     return await this.tokenService.removeToken(refreshToken);
+  }
+
+  checkLoginData(loginData: Partial<LoginUserDto>, skipPasswordCheck: boolean) {
+    if (
+      // если эту проверку можно реализовать на клиенте, то там ей быть логичнее (skipPass передаётся при oauth через сторонние сервисы)
+      (loginData.email === null || loginData.password === null) &&
+      skipPasswordCheck === false
+    )
+      throw new HttpException(
+        `Email и пароль необходимы для регистрации`,
+        HttpStatus.BAD_REQUEST,
+      );
   }
 }

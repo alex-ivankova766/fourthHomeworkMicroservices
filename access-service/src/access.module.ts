@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from "@nestjs/config";
+import { ConfigModule } from '@nestjs/config';
 import { SequelizeModule } from '@nestjs/sequelize';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
@@ -11,7 +11,7 @@ import { UserRoles } from './roles/linkingTables/user-roles.model';
 @Module({
   imports: [
     ConfigModule.forRoot({
-      envFilePath: `../.env`
+      envFilePath: `../.env`,
     }),
     SequelizeModule.forRoot({
       dialect: 'postgres',
@@ -25,7 +25,7 @@ import { UserRoles } from './roles/linkingTables/user-roles.model';
     }),
     AuthModule,
     UsersModule,
-    RolesModule
-]
+    RolesModule,
+  ],
 })
 export class AccessModule {}
