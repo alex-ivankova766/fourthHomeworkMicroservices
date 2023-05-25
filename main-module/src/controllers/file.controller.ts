@@ -15,7 +15,7 @@ export class FilesController {
   @UseGuards(RolesGuard)
   @Roles('admin')
   // eslint-disable-next-line prettier/prettier
-  @ApiOperation({ summary: `Удалить файлы неиспользующиеся более ${process.env.REQ_TIME} милисекунд` })
+  @ApiOperation({ summary: `Удалить файлы неиспользующиеся более $ {process.env.REQ_TIME} миллисекунд` })
   @ApiResponse({ status: 201, type: Boolean, description: 'Успешный запрос' })
   @Delete('clean')
   async cleanFiles() {
